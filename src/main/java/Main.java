@@ -1,6 +1,10 @@
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -13,27 +17,54 @@ public class Main {
         while (true) {
             System.out.print("$ ");
             String input = scanner.nextLine();
+            if (input.isBlank()) {
+                continue;
+            }
 
-            if (input.equals("exit") || input.equals("exit 0")) {
+            List<String> tokens = new ArrayList<>(Arrays.asList(input.trim().split("\\s+")));
+            String command = tokens.get(0);
+
+            if (command.equals("exit") && (tokens.size() == 1 || (tokens.size() == 2 && tokens.get(1).equals("0")))) {
                 break;
-            } else if (input.startsWith("type ")) {
-                String command = input.substring(5).trim();
-                if (builtins.contains(command)) {
-                    System.out.println(command + " is a shell builtin");
+            } else if (command.equals("type")) {
+                String query = tokens.size() > 1 ? tokens.get(1) : "";
+                if (query.isEmpty()) {
+                    continue;
+                }
+
+                if (builtins.contains(query)) {
+                    System.out.println(query + " is a shell builtin");
                 } else {
-                    String executablePath = findExecutableInPath(command);
+                    String executablePath = findExecutableInPath(query);
                     if (executablePath != null) {
-                        System.out.println(command + " is " + executablePath);
+                        System.out.println(query + " is " + executablePath);
                     } else {
-                        System.out.println(command + ": not found");
+                        System.out.println(query + ": not found");
                     }
                 }
-            } else if (input.startsWith("echo ")) {
-                System.out.println(input.substring(5));
+            } else if (command.equals("echo")) {
+                String output = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
+                System.out.println(output);
             } else {
-                System.out.println(input + ": command not found");
+                String executablePath = findExecutableInPath(command);
+                if (executablePath == null) {
+                    System.out.println(command + ": command not found");
+                    continue;
+                }
+
+                runExternalCommand(executablePath, tokens);
             }
         }
+    }
+
+    private static void runExternalCommand(String executablePath, List<String> tokens)
+            throws IOException, InterruptedException {
+        tokens.set(0, executablePath);
+        ProcessBuilder builder = new ProcessBuilder(tokens);
+        builder.redirectErrorStream(true);
+        builder.inheritIO();
+        Process process = builder.start();
+        process.waitFor();
     }
 
     private static String findExecutableInPath(String command) {
