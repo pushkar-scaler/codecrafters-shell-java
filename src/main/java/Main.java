@@ -13,7 +13,8 @@ public class Main {
     public static void main(String[] args) throws Exception {
         // TODO: Uncomment the code below to pass the first stage
         Scanner scanner = new Scanner(System.in);
-        Set<String> builtins = Set.of("echo", "exit", "type", "pwd");
+        Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
+        Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
 
         while (true) {
             System.out.print("$ ");
@@ -47,7 +48,16 @@ public class Main {
                 String output = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
                 System.out.println(output);
             } else if (command.equals("pwd")) {
-                System.out.println(Paths.get("").toAbsolutePath().normalize());
+                System.out.println(currentDirectory);
+            } else if (command.equals("cd")) {
+                String target = tokens.size() > 1 ? tokens.get(1) : "";
+                Path targetPath = Path.of(target);
+
+                if (targetPath.isAbsolute() && Files.isDirectory(targetPath)) {
+                    currentDirectory = targetPath.normalize();
+                } else {
+                    System.out.println("cd: " + target + ": No such file or directory");
+                }
             } else {
                 String executablePath = findExecutableInPath(command);
                 if (executablePath == null) {
@@ -55,14 +65,15 @@ public class Main {
                     continue;
                 }
 
-                runExternalCommand(tokens);
+                runExternalCommand(tokens, currentDirectory);
             }
         }
     }
 
-    private static void runExternalCommand(List<String> tokens)
+    private static void runExternalCommand(List<String> tokens, Path currentDirectory)
             throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(tokens);
+        builder.directory(currentDirectory.toFile());
         builder.redirectErrorStream(true);
         builder.inheritIO();
         Process process = builder.start();
