@@ -52,14 +52,13 @@ public class Main {
                     continue;
                 }
 
-                runExternalCommand(executablePath, tokens);
+                runExternalCommand(tokens);
             }
         }
     }
 
-    private static void runExternalCommand(String executablePath, List<String> tokens)
+    private static void runExternalCommand(List<String> tokens)
             throws IOException, InterruptedException {
-        tokens.set(0, executablePath);
         ProcessBuilder builder = new ProcessBuilder(tokens);
         builder.redirectErrorStream(true);
         builder.inheritIO();
