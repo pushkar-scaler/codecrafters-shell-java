@@ -2,6 +2,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +13,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
         // TODO: Uncomment the code below to pass the first stage
         Scanner scanner = new Scanner(System.in);
-        Set<String> builtins = Set.of("echo", "exit", "type");
+        Set<String> builtins = Set.of("echo", "exit", "type", "pwd");
 
         while (true) {
             System.out.print("$ ");
@@ -45,6 +46,8 @@ public class Main {
             } else if (command.equals("echo")) {
                 String output = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
                 System.out.println(output);
+            } else if (command.equals("pwd")) {
+                System.out.println(Paths.get("").toAbsolutePath().normalize());
             } else {
                 String executablePath = findExecutableInPath(command);
                 if (executablePath == null) {
