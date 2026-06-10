@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Set;
+import java.util.Set; 
 
 public class Main {
     public static void main(String[] args) throws Exception {
@@ -51,10 +51,18 @@ public class Main {
                 System.out.println(currentDirectory);
             } else if (command.equals("cd")) {
                 String target = tokens.size() > 1 ? tokens.get(1) : "";
-                Path targetPath = Path.of(target);
+                if (target.isEmpty()) {
+                    System.out.println("cd: " + target + ": No such file or directory");
+                    continue;
+                }
 
-                if (targetPath.isAbsolute() && Files.isDirectory(targetPath)) {
-                    currentDirectory = targetPath.normalize();
+                Path targetPath = Path.of(target);
+                Path resolvedPath = targetPath.isAbsolute()
+                        ? targetPath
+                        : currentDirectory.resolve(targetPath);
+
+                if (Files.isDirectory(resolvedPath)) {
+                    currentDirectory = resolvedPath.normalize();
                 } else {
                     System.out.println("cd: " + target + ": No such file or directory");
                 }
