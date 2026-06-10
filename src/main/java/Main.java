@@ -29,7 +29,7 @@ public class Main {
                     }
                 }
                 if (matches.size() == 1) {
-                    System.out.println(matches.get(0) + " ");
+                    System.out.println("$ " + matches.get(0) + " ");
                 }
                 continue;
             }
