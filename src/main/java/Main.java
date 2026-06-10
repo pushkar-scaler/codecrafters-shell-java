@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
@@ -12,6 +13,7 @@ import java.util.Set;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.Completer;
+import org.jline.reader.Reference;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.reader.impl.completer.ArgumentCompleter;
 import org.jline.reader.impl.completer.NullCompleter;
@@ -20,6 +22,17 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 public class Main {
+    private static String lcp(List<String> strings) {
+        if (strings.isEmpty()) return "";
+        String prefix = strings.get(0);
+        for (String s : strings) {
+            while (s.indexOf(prefix) != 0) {
+                prefix = prefix.substring(0, prefix.length() - 1);
+            }
+        }
+        return prefix;
+    }
+
     public static void main(String[] args) throws Exception {
         Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
         Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
@@ -64,6 +77,50 @@ public class Main {
                 .option(LineReader.Option.AUTO_LIST, true)
                 .option(LineReader.Option.LIST_AMBIGUOUS, true)
                 .build();
+
+        int[] tabCount = {0};
+        String[] lastBuf = {""};
+
+        reader.getWidgets().put("my-tab", () -> {
+            String buf = reader.getBuffer().toString();
+            if (buf.contains(" ")) {
+                System.out.print("\007"); System.out.flush();
+                return true;
+            }
+            
+            List<String> matches = new ArrayList<>();
+            for (String n : commandNames) {
+                if (n.startsWith(buf)) matches.add(n);
+            }
+            
+            if (matches.isEmpty()) {
+                System.out.print("\007"); System.out.flush();
+            } else if (matches.size() == 1) {
+                String extra = matches.get(0).substring(buf.length()) + " ";
+                reader.getBuffer().write(extra);
+                tabCount[0] = 0;
+            } else {
+                String commonPrefix = lcp(matches);
+                if (commonPrefix.length() > buf.length()) {
+                    String extra = commonPrefix.substring(buf.length());
+                    reader.getBuffer().write(extra);
+                    tabCount[0] = 0;
+                } else {
+                    if (!buf.equals(lastBuf[0])) { tabCount[0] = 0; lastBuf[0] = buf; }
+                    if (tabCount[0] == 0) {
+                        System.out.print("\007"); System.out.flush();
+                        tabCount[0]++;
+                    } else {
+                        Collections.sort(matches);
+                        System.out.print("\r\n" + String.join("  ", matches) + "\n");
+                        reader.callWidget(LineReader.REDRAW_LINE);
+                        tabCount[0] = 0;
+                    }
+                }
+            }
+            return true;
+        });
+        reader.getKeyMaps().get(LineReader.MAIN).bind(new Reference("my-tab"), "\t");
 
         while (true) {
             String input;
