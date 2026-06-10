@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Set; 
@@ -12,6 +13,8 @@ import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.Completer;
 import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.reader.impl.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.NullCompleter;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -22,7 +25,32 @@ public class Main {
         Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
 
         Terminal terminal = TerminalBuilder.builder().system(true).build();
-        Completer completer = new StringsCompleter("echo", "exit");
+        
+        Set<String> commandNames = new HashSet<>();
+        commandNames.add("echo");
+        commandNames.add("exit");
+        commandNames.add("type");
+        commandNames.add("pwd");
+        commandNames.add("cd");
+        
+        String pathEnvExt = System.getenv("PATH");
+        if (pathEnvExt != null && !pathEnvExt.isEmpty()) {
+            String[] directories = pathEnvExt.split(File.pathSeparator);
+            for (String directory : directories) {
+                if (directory.isEmpty()) continue;
+                Path dirPath = Path.of(directory);
+                if (Files.isDirectory(dirPath)) {
+                    try (java.util.stream.Stream<Path> stream = Files.list(dirPath)) {
+                        stream.filter(Files::isRegularFile)
+                              .filter(Files::isExecutable)
+                              .forEach(p -> commandNames.add(p.getFileName().toString()));
+                    } catch (IOException e) {
+                        // Ignore unreadable directories
+                    }
+                }
+            }
+        }
+        Completer completer = new ArgumentCompleter(new StringsCompleter(commandNames), NullCompleter.INSTANCE);
         
         DefaultParser parser = new DefaultParser();
         parser.setEscapeChars(null);
