@@ -23,9 +23,9 @@ public class Main {
                 String beforeTab = input.substring(0, input.indexOf('\t'));
                 String prefix = beforeTab.trim();
                 List<String> matches = new ArrayList<>();
-                for (String b : builtins) {
-                    if (b.startsWith(prefix)) {
-                        matches.add(b);
+                for (String builtin : Arrays.asList("echo", "exit")) {
+                    if (builtin.startsWith(prefix)) {
+                        matches.add(builtin);
                     }
                 }
                 if (matches.size() == 1) {
