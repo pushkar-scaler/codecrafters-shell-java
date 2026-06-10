@@ -6,19 +6,29 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
-import java.util.Set; 
+import java.util.Set;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.reader.Completer;
+import org.jline.reader.ParsedLine;
+import org.jline.reader.CompletingParsedLine;
+import org.jline.reader.Candidate;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        // TODO: Uncomment the code below to pass the first stage
-        Scanner scanner = new Scanner(System.in);
+        Terminal terminal = TerminalBuilder.builder().build();
+        LineReader lineReader = LineReaderBuilder.builder()
+                .terminal(terminal)
+                .completer(new BuiltinCompleter())
+                .build();
+        
         Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
         Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
 
         while (true) {
-            System.out.print("$ ");
-            String input = scanner.nextLine();
+            String input = lineReader.readLine("$ ");
             if (input.isBlank()) {
                 continue;
             }
@@ -318,5 +328,30 @@ public class Main {
         }
 
         return null;
+    }
+}
+
+class BuiltinCompleter implements Completer {
+    private static final List<String> BUILTINS = Arrays.asList("echo", "exit");
+
+    @Override
+    public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
+        String buffer = line.line();
+        String[] tokens = buffer.split("\\s+");
+        
+        if (tokens.length == 0) {
+            return;
+        }
+        
+        // Only provide completion if we're on the first token (command name)
+        if (tokens.length == 1 || (tokens.length > 1 && !buffer.endsWith(" "))) {
+            String partial = tokens[0];
+            
+            for (String builtin : BUILTINS) {
+                if (builtin.startsWith(partial)) {
+                    candidates.add(new Candidate(builtin + " "));
+                }
+            }
+        }
     }
 }
