@@ -56,7 +56,20 @@ public class Main {
                     continue;
                 }
 
-                Path targetPath = Path.of(target);
+                Path targetPath;
+                if (target.equals("~") || target.startsWith("~/")) {
+                    String home = System.getenv("HOME");
+                    if (home == null || home.isEmpty()) {
+                        System.out.println("cd: " + target + ": No such file or directory");
+                        continue;
+                    }
+
+                    String relative = target.equals("~") ? "" : target.substring(2);
+                    targetPath = relative.isEmpty() ? Path.of(home) : Path.of(home, relative);
+                } else {
+                    targetPath = Path.of(target);
+                }
+
                 Path resolvedPath = targetPath.isAbsolute()
                         ? targetPath
                         : currentDirectory.resolve(targetPath);
