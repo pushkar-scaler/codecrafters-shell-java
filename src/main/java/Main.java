@@ -6,29 +6,34 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
-import org.jline.reader.Completer;
-import org.jline.reader.ParsedLine;
-import org.jline.reader.CompletingParsedLine;
-import org.jline.reader.Candidate;
+import java.util.Scanner;
+import java.util.Set; 
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        Terminal terminal = TerminalBuilder.builder().build();
-        LineReader lineReader = LineReaderBuilder.builder()
-                .terminal(terminal)
-                .completer(new BuiltinCompleter())
-                .build();
-        
+        // TODO: Uncomment the code below to pass the first stage
+        Scanner scanner = new Scanner(System.in);
         Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
         Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
 
         while (true) {
-            String input = lineReader.readLine("$ ");
+            System.out.print("$ ");
+            String input = scanner.nextLine();
+            if (input.indexOf('\t') != -1) {
+                String beforeTab = input.substring(0, input.indexOf('\t'));
+                String prefix = beforeTab.trim();
+                List<String> matches = new ArrayList<>();
+                for (String b : builtins) {
+                    if (b.startsWith(prefix)) {
+                        matches.add(b);
+                    }
+                }
+                if (matches.size() == 1) {
+                    System.out.println(matches.get(0) + " ");
+                }
+                continue;
+            }
+
             if (input.isBlank()) {
                 continue;
             }
@@ -328,30 +333,5 @@ public class Main {
         }
 
         return null;
-    }
-}
-
-class BuiltinCompleter implements Completer {
-    private static final List<String> BUILTINS = Arrays.asList("echo", "exit");
-
-    @Override
-    public void complete(LineReader reader, ParsedLine line, List<Candidate> candidates) {
-        String buffer = line.line();
-        String[] tokens = buffer.split("\\s+");
-        
-        if (tokens.length == 0) {
-            return;
-        }
-        
-        // Only provide completion if we're on the first token (command name)
-        if (tokens.length == 1 || (tokens.length > 1 && !buffer.endsWith(" "))) {
-            String partial = tokens[0];
-            
-            for (String builtin : BUILTINS) {
-                if (builtin.startsWith(partial)) {
-                    candidates.add(new Candidate(builtin + " "));
-                }
-            }
-        }
     }
 }
