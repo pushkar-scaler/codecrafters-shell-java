@@ -19,9 +19,9 @@ public class Main {
         while (true) {
             System.out.print("$ ");
             String input = scanner.nextLine();
-            if (input.indexOf('\t') != -1) {
-                String beforeTab = input.substring(0, input.indexOf('\t'));
-                String prefix = beforeTab.trim();
+            String trimmedInput = input.stripTrailing();
+            if (!trimmedInput.equals(input)) {
+                String prefix = trimmedInput.trim();
                 List<String> matches = new ArrayList<>();
                 for (String builtin : Arrays.asList("echo", "exit")) {
                     if (builtin.startsWith(prefix)) {
@@ -30,8 +30,8 @@ public class Main {
                 }
                 if (matches.size() == 1) {
                     System.out.println("$ " + matches.get(0) + " ");
+                    continue;
                 }
-                continue;
             }
 
             if (input.isBlank()) {
