@@ -60,6 +60,9 @@ public class Main {
                 .terminal(terminal)
                 .completer(completer)
                 .parser(parser)
+                .option(LineReader.Option.AUTO_MENU, false)
+                .option(LineReader.Option.AUTO_LIST, true)
+                .option(LineReader.Option.LIST_AMBIGUOUS, true)
                 .build();
 
         while (true) {
