@@ -110,10 +110,15 @@ public class Main {
         boolean inSingleQuote = false;
         boolean inDoubleQuote = false;
         boolean tokenStarted = false;
+        boolean escaping = false;
 
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
-            if (inSingleQuote) {
+            if (escaping) {
+                current.append(c);
+                tokenStarted = true;
+                escaping = false;
+            } else if (inSingleQuote) {
                 if (c == '\'') {
                     inSingleQuote = false;
                 } else {
@@ -126,6 +131,9 @@ public class Main {
                 } else {
                     current.append(c);
                 }
+                tokenStarted = true;
+            } else if (c == '\\') {
+                escaping = true;
                 tokenStarted = true;
             } else if (c == '\'') {
                 inSingleQuote = true;
@@ -143,6 +151,11 @@ public class Main {
                 current.append(c);
                 tokenStarted = true;
             }
+        }
+
+        if (escaping) {
+            current.append('\\');
+            tokenStarted = true;
         }
 
         if (tokenStarted) {
