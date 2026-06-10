@@ -12,6 +12,7 @@ import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.Completer;
 import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
@@ -22,9 +23,15 @@ public class Main {
 
         Terminal terminal = TerminalBuilder.builder().system(true).build();
         Completer completer = new StringsCompleter("echo", "exit");
+        
+        DefaultParser parser = new DefaultParser();
+        parser.setEscapeChars(null);
+        parser.setQuoteChars(null);
+
         LineReader reader = LineReaderBuilder.builder()
                 .terminal(terminal)
                 .completer(completer)
+                .parser(parser)
                 .build();
 
         while (true) {
