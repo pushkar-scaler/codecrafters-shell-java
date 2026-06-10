@@ -78,11 +78,26 @@ public class Main {
                         writeOutput(query + ": not found", redirectOutput);
                     }
                 }
+                if (redirectError != null) {
+                    Files.writeString(redirectError, "",
+                            java.nio.file.StandardOpenOption.CREATE,
+                            java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                }
             } else if (command.equals("echo")) {
                 String output = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
                 writeOutput(output, redirectOutput);
+                if (redirectError != null) {
+                    Files.writeString(redirectError, "",
+                            java.nio.file.StandardOpenOption.CREATE,
+                            java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                }
             } else if (command.equals("pwd")) {
                 writeOutput(currentDirectory.toString(), redirectOutput);
+                if (redirectError != null) {
+                    Files.writeString(redirectError, "",
+                            java.nio.file.StandardOpenOption.CREATE,
+                            java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                }
             } else if (command.equals("cd")) {
                 String target = tokens.size() > 1 ? tokens.get(1) : "";
                 if (target.isEmpty()) {
