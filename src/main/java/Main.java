@@ -31,6 +31,7 @@ public class Main {
             Path redirectOutput = null;
             boolean appendOutput = false;
             Path redirectError = null;
+            boolean appendError = false;
             for (int i = 0; i < tokens.size() - 1; i++) {
                 String token = tokens.get(i);
                 if (token.equals(">>") || token.equals("1>>")) {
@@ -59,11 +60,25 @@ public class Main {
             }
             for (int i = 0; i < tokens.size() - 1; i++) {
                 String token = tokens.get(i);
+                if (token.equals("2>>")) {
+                    Path redirectPath = Path.of(tokens.get(i + 1));
+                    redirectError = redirectPath.isAbsolute()
+                            ? redirectPath
+                            : currentDirectory.resolve(redirectPath);
+                    appendError = true;
+                    tokens.remove(i + 1);
+                    tokens.remove(i);
+                    break;
+                }
+            }
+            for (int i = 0; i < tokens.size() - 1; i++) {
+                String token = tokens.get(i);
                 if (token.equals("2>")) {
                     Path redirectPath = Path.of(tokens.get(i + 1));
                     redirectError = redirectPath.isAbsolute()
                             ? redirectPath
                             : currentDirectory.resolve(redirectPath);
+                    appendError = false;
                     tokens.remove(i + 1);
                     tokens.remove(i);
                     break;
@@ -94,24 +109,42 @@ public class Main {
                     }
                 }
                 if (redirectError != null) {
-                    Files.writeString(redirectError, "",
-                            java.nio.file.StandardOpenOption.CREATE,
-                            java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    if (appendError) {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    }
                 }
             } else if (command.equals("echo")) {
                 String output = tokens.size() > 1 ? String.join(" ", tokens.subList(1, tokens.size())) : "";
                 writeOutput(output, redirectOutput, appendOutput);
                 if (redirectError != null) {
-                    Files.writeString(redirectError, "",
-                            java.nio.file.StandardOpenOption.CREATE,
-                            java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    if (appendError) {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    }
                 }
             } else if (command.equals("pwd")) {
                 writeOutput(currentDirectory.toString(), redirectOutput, appendOutput);
                 if (redirectError != null) {
-                    Files.writeString(redirectError, "",
-                            java.nio.file.StandardOpenOption.CREATE,
-                            java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    if (appendError) {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    }
                 }
             } else if (command.equals("cd")) {
                 String target = tokens.size() > 1 ? tokens.get(1) : "";
@@ -150,7 +183,7 @@ public class Main {
                     continue;
                 }
 
-                runExternalCommand(tokens, currentDirectory, redirectOutput, appendOutput, redirectError);
+                runExternalCommand(tokens, currentDirectory, redirectOutput, appendOutput, redirectError, appendError);
             }
         }
     }
@@ -171,7 +204,7 @@ public class Main {
         }
     }
 
-    private static void runExternalCommand(List<String> tokens, Path currentDirectory, Path redirectOutput, boolean appendOutput, Path redirectError)
+    private static void runExternalCommand(List<String> tokens, Path currentDirectory, Path redirectOutput, boolean appendOutput, Path redirectError, boolean appendError)
             throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(tokens);
         builder.directory(currentDirectory.toFile());
@@ -184,6 +217,8 @@ public class Main {
         }
         if (redirectError == null) {
             builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        } else if (appendError) {
+            builder.redirectError(ProcessBuilder.Redirect.appendTo(redirectError.toFile()));
         } else {
             builder.redirectError(redirectError.toFile());
         }
