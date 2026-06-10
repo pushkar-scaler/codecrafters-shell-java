@@ -108,6 +108,7 @@ public class Main {
         List<String> tokens = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
         boolean tokenStarted = false;
 
         for (int i = 0; i < input.length(); i++) {
@@ -119,8 +120,18 @@ public class Main {
                     current.append(c);
                 }
                 tokenStarted = true;
+            } else if (inDoubleQuote) {
+                if (c == '"') {
+                    inDoubleQuote = false;
+                } else {
+                    current.append(c);
+                }
+                tokenStarted = true;
             } else if (c == '\'') {
                 inSingleQuote = true;
+                tokenStarted = true;
+            } else if (c == '"') {
+                inDoubleQuote = true;
                 tokenStarted = true;
             } else if (Character.isWhitespace(c)) {
                 if (tokenStarted) {
