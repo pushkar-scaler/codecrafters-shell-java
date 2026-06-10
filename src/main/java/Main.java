@@ -29,11 +29,24 @@ public class Main {
             }
 
             Path redirectOutput = null;
+            Path redirectError = null;
             for (int i = 0; i < tokens.size() - 1; i++) {
                 String token = tokens.get(i);
                 if (token.equals(">") || token.equals("1>")) {
                     Path redirectPath = Path.of(tokens.get(i + 1));
                     redirectOutput = redirectPath.isAbsolute()
+                            ? redirectPath
+                            : currentDirectory.resolve(redirectPath);
+                    tokens.remove(i + 1);
+                    tokens.remove(i);
+                    break;
+                }
+            }
+            for (int i = 0; i < tokens.size() - 1; i++) {
+                String token = tokens.get(i);
+                if (token.equals("2>")) {
+                    Path redirectPath = Path.of(tokens.get(i + 1));
+                    redirectError = redirectPath.isAbsolute()
                             ? redirectPath
                             : currentDirectory.resolve(redirectPath);
                     tokens.remove(i + 1);
@@ -107,7 +120,7 @@ public class Main {
                     continue;
                 }
 
-                runExternalCommand(tokens, currentDirectory, redirectOutput);
+                runExternalCommand(tokens, currentDirectory, redirectOutput, redirectError);
             }
         }
     }
@@ -122,7 +135,7 @@ public class Main {
         }
     }
 
-    private static void runExternalCommand(List<String> tokens, Path currentDirectory, Path redirectOutput)
+    private static void runExternalCommand(List<String> tokens, Path currentDirectory, Path redirectOutput, Path redirectError)
             throws IOException, InterruptedException {
         ProcessBuilder builder = new ProcessBuilder(tokens);
         builder.directory(currentDirectory.toFile());
@@ -131,7 +144,11 @@ public class Main {
         } else {
             builder.redirectOutput(redirectOutput.toFile());
         }
-        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        if (redirectError == null) {
+            builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        } else {
+            builder.redirectError(redirectError.toFile());
+        }
         Process process = builder.start();
         process.waitFor();
     }
