@@ -128,6 +128,14 @@ public class Main {
             } else if (inDoubleQuote) {
                 if (c == '"') {
                     inDoubleQuote = false;
+                } else if (c == '\\' && i + 1 < input.length()) {
+                    char next = input.charAt(i + 1);
+                    if (next == '"' || next == '\\') {
+                        current.append(next);
+                        i++;
+                    } else {
+                        current.append(c);
+                    }
                 } else {
                     current.append(c);
                 }
