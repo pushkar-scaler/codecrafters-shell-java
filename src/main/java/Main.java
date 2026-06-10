@@ -29,7 +29,8 @@ public class Main {
                     }
                 }
                 if (matches.size() == 1) {
-                    System.out.println("$ " + matches.get(0) + " ");
+                    System.out.print("\r$ " + matches.get(0) + " ");
+                    System.out.flush();
                 }
                 continue;
             }
