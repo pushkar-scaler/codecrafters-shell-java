@@ -23,7 +23,10 @@ public class Main {
                 continue;
             }
 
-            List<String> tokens = new ArrayList<>(Arrays.asList(input.trim().split("\\s+")));
+            List<String> tokens = parseTokens(input);
+            if (tokens.isEmpty()) {
+                continue;
+            }
             String command = tokens.get(0);
 
             if (command.equals("exit") && (tokens.size() == 1 || (tokens.size() == 2 && tokens.get(1).equals("0")))) {
@@ -99,6 +102,43 @@ public class Main {
         builder.inheritIO();
         Process process = builder.start();
         process.waitFor();
+    }
+
+    private static List<String> parseTokens(String input) {
+        List<String> tokens = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inSingleQuote = false;
+        boolean tokenStarted = false;
+
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (inSingleQuote) {
+                if (c == '\'') {
+                    inSingleQuote = false;
+                } else {
+                    current.append(c);
+                }
+                tokenStarted = true;
+            } else if (c == '\'') {
+                inSingleQuote = true;
+                tokenStarted = true;
+            } else if (Character.isWhitespace(c)) {
+                if (tokenStarted) {
+                    tokens.add(current.toString());
+                    current.setLength(0);
+                    tokenStarted = false;
+                }
+            } else {
+                current.append(c);
+                tokenStarted = true;
+            }
+        }
+
+        if (tokenStarted) {
+            tokens.add(current.toString());
+        }
+
+        return tokens;
     }
 
     private static String findExecutableInPath(String command) {
