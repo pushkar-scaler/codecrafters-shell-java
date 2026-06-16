@@ -34,7 +34,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd");
+        Set<String> builtins = Set.of("echo", "exit", "type", "pwd", "cd", "jobs");
         Path currentDirectory = Paths.get("").toAbsolutePath().normalize();
 
         Terminal terminal = TerminalBuilder.builder().system(true).build();
@@ -45,6 +45,7 @@ public class Main {
         commandNames.add("type");
         commandNames.add("pwd");
         commandNames.add("cd");
+        commandNames.add("jobs");
         
         String pathEnvExt = System.getenv("PATH");
         if (pathEnvExt != null && !pathEnvExt.isEmpty()) {
@@ -288,6 +289,32 @@ public class Main {
                     currentDirectory = resolvedPath.normalize();
                 } else {
                     System.out.println("cd: " + target + ": No such file or directory");
+                }
+            } else if (command.equals("jobs")) {
+                // Empty implementation for now.
+                // In this stage, no background jobs need to be listed.
+                if (redirectOutput != null) {
+                    if (appendOutput) {
+                        Files.writeString(redirectOutput, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(redirectOutput, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    }
+                }
+
+                if (redirectError != null) {
+                    if (appendError) {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.APPEND);
+                    } else {
+                        Files.writeString(redirectError, "",
+                                java.nio.file.StandardOpenOption.CREATE,
+                                java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
+                    }
                 }
             } else {
                 String executablePath = findExecutableInPath(command);
